@@ -18,6 +18,7 @@ extern "C"
 
 #define XLINK_MAX_MX_ID_SIZE 32
 #define XLINK_MAX_NAME_SIZE 64
+#define XLINK_MAX_INTERFACE_NAME_SIZE 16
 
 #ifdef XLINK_MAX_STREAM_RES
 #define XLINK_MAX_STREAMS XLINK_MAX_STREAM_RES
@@ -120,6 +121,7 @@ typedef struct {
     char mxid[XLINK_MAX_MX_ID_SIZE];
     XLinkError_t status;
     bool nameHintOnly;
+    char interface[XLINK_MAX_INTERFACE_NAME_SIZE];
 } deviceDesc_t;
 
 typedef struct streamPacketDesc_t

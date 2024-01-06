@@ -47,7 +47,7 @@
 
 // Debug, uncomment first line for some printing
 //#define HAS_DEBUG
-#undef HAS_DEBUG
+// #undef HAS_DEBUG
 
 #define BROADCAST_UDP_PORT                  11491
 
@@ -87,9 +87,21 @@ static XLinkDeviceState_t tcpip_convert_device_state(uint32_t state)
 }
 
 
-static tcpipHostError_t tcpip_create_socket(TCPIP_SOCKET* out_sock, bool broadcast, int timeout_ms)
+static tcpipHostError_t tcpip_create_socket(TCPIP_SOCKET* out_sock, bool broadcast, int timeout_ms, const char* interface = NULL)
 {
     TCPIP_SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    // Bind to specific interface if provided
+    if(interface != NULL && strlen(interface) > 0) {
+#if (defined(_WIN32) || defined(_WIN64) )
+        // Windows does not support SO_BINDTODEVICE
+#else
+        if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)) < 0) {
+            return TCPIP_HOST_ERROR;
+        }
+#endif
+    }
+
  #if (defined(_WIN32) || defined(_WIN64) )
     if(sock == INVALID_SOCKET)
     {
@@ -138,9 +150,9 @@ static tcpipHostError_t tcpip_create_socket(TCPIP_SOCKET* out_sock, bool broadca
     return TCPIP_HOST_SUCCESS;
 }
 
-static tcpipHostError_t tcpip_create_socket_broadcast(TCPIP_SOCKET* out_sock)
+static tcpipHostError_t tcpip_create_socket_broadcast(TCPIP_SOCKET* out_sock, const char* interface = NULL)
 {
-    return tcpip_create_socket(out_sock, true, DEVICE_RES_TIMEOUT_MSEC);
+    return tcpip_create_socket(out_sock, true, DEVICE_RES_TIMEOUT_MSEC, interface);
 }
 
 
@@ -281,6 +293,7 @@ xLinkPlatformErrorCode_t tcpip_get_devices(const deviceDesc_t in_deviceRequireme
     const char* target_ip = in_deviceRequirements.name;
     XLinkDeviceState_t target_state = in_deviceRequirements.state;
     const char* target_mxid = in_deviceRequirements.mxid;
+    const char* interface = in_deviceRequirements.interface;
 
     // Socket
     TCPIP_SOCKET sock;
@@ -300,7 +313,7 @@ xLinkPlatformErrorCode_t tcpip_get_devices(const deviceDesc_t in_deviceRequireme
     }
 
     // Create socket first (also capable of doing broadcasts)
-    if(tcpip_create_socket_broadcast(&sock) != TCPIP_HOST_SUCCESS){
+    if(tcpip_create_socket_broadcast(&sock, interface) != TCPIP_HOST_SUCCESS){
         return X_LINK_PLATFORM_ERROR;
     }
 
