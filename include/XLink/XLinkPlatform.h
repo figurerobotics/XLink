@@ -61,7 +61,7 @@ xLinkPlatformErrorCode_t XLinkPlatformFindArrayOfDevicesNames(
 xLinkPlatformErrorCode_t XLinkPlatformBootRemote(const deviceDesc_t* deviceDesc, const char* binaryPath);
 xLinkPlatformErrorCode_t XLinkPlatformBootFirmware(const deviceDesc_t* deviceDesc, const char* firmware, size_t length);
 xLinkPlatformErrorCode_t XLinkPlatformConnect(const char* devPathRead, const char* devPathWrite,
-                         XLinkProtocol_t protocol, void** fd);
+                         XLinkProtocol_t protocol, void** fd, const char* interface);
 xLinkPlatformErrorCode_t XLinkPlatformBootBootloader(const char* name, XLinkProtocol_t protocol);
 
 UsbSpeed_t get_usb_speed();

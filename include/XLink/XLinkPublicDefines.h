@@ -154,6 +154,7 @@ typedef struct XLinkGlobalHandler_t
 
 typedef struct
 {
+    const char* interface;
     char* devicePath;
     char* devicePath2;
     int linkId;

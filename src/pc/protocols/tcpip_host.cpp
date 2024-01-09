@@ -403,6 +403,9 @@ xLinkPlatformErrorCode_t tcpip_get_devices(const deviceDesc_t in_deviceRequireme
                 // MXID
                 memset(devices[num_devices_match].mxid, 0, sizeof(devices[num_devices_match].mxid));
                 strncpy(devices[num_devices_match].mxid, recv_buffer.mxid, sizeof(devices[num_devices_match].mxid));
+                // Interface
+                memset(devices[num_devices_match].interface, 0, sizeof(devices[num_devices_match].interface));
+                strncpy(devices[num_devices_match].interface, interface, sizeof(devices[num_devices_match].interface));
                 // Platform
                 devices[num_devices_match].platform = X_LINK_MYRIAD_X;
                 // Protocol

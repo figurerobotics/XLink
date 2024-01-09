@@ -17,6 +17,7 @@
 #include "XLinkLog.h"
 
 #ifndef USE_USB_VSC
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <sys/un.h>
 #include <sys/ioctl.h>
@@ -63,7 +64,7 @@ static const int statuswaittimeout = 5;
 // ------------------------------------
 
 static int pciePlatformConnect(UNUSED const char *devPathRead, const char *devPathWrite, void **fd);
-static int tcpipPlatformConnect(const char *devPathRead, const char *devPathWrite, void **fd);
+static int tcpipPlatformConnect(const char *devPathRead, const char *devPathWrite, void **fd, const char* interface);
 
 static xLinkPlatformErrorCode_t usbPlatformBootBootloader(const char *name);
 static int pciePlatformBootBootloader(const char *name);
@@ -173,8 +174,7 @@ xLinkPlatformErrorCode_t XLinkPlatformBootFirmware(const deviceDesc_t* deviceDes
 
 }
 
-
-xLinkPlatformErrorCode_t XLinkPlatformConnect(const char* devPathRead, const char* devPathWrite, XLinkProtocol_t protocol, void** fd)
+xLinkPlatformErrorCode_t XLinkPlatformConnect(const char* devPathRead, const char* devPathWrite, XLinkProtocol_t protocol, void** fd, const char* interface)
 {
     if(!XLinkIsProtocolInitialized(protocol)) {
         return X_LINK_PLATFORM_DRIVER_NOT_LOADED+protocol;
@@ -188,7 +188,7 @@ xLinkPlatformErrorCode_t XLinkPlatformConnect(const char* devPathRead, const cha
             return pciePlatformConnect(devPathRead, devPathWrite, fd);
 
         case X_LINK_TCP_IP:
-            return tcpipPlatformConnect(devPathRead, devPathWrite, fd);
+            return tcpipPlatformConnect(devPathRead, devPathWrite, fd, interface);
 
         default:
             return X_LINK_PLATFORM_INVALID_PARAMETERS;
@@ -293,7 +293,7 @@ int pciePlatformConnect(UNUSED const char *devPathRead,
 }
 
 // TODO add IPv6 to tcpipPlatformConnect()
-int tcpipPlatformConnect(const char *devPathRead, const char *devPathWrite, void **fd)
+int tcpipPlatformConnect(const char *devPathRead, const char *devPathWrite, void **fd, const char* interface)
 {
 #if defined(USE_TCP_IP)
     if (!devPathWrite || !fd) {
@@ -301,6 +301,17 @@ int tcpipPlatformConnect(const char *devPathRead, const char *devPathWrite, void
     }
 
     TCPIP_SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+
+    // Bind to specific interface if provided
+    if(interface != NULL && strlen(interface) > 0) {
+#if (defined(_WIN32) || defined(_WIN64) )
+        // Windows does not support SO_BINDTODEVICE
+#else
+        if(setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)) < 0) {
+            return TCPIP_HOST_ERROR;
+        }
+#endif
+    }
 
 #if (defined(_WIN32) || defined(_WIN64) )
     if(sock == INVALID_SOCKET)
